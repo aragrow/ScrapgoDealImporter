@@ -1,11 +1,32 @@
 <?php
 /**
- * The ScrapGoDealsSetup class is responsible for setting up and configuring the ScrapGo Deals Scrapgofunctionality in WordPress.
- * The constructor registers activation and deactivation hooks, as well as a hook to register the Scrapgopost type during WordPress initialization.
- * The activate() and deactivate() methods serve as callback functions for activation and deactivation hooks, respectively. You can perform any necessary 
- *      tasks related to activation or deactivation within these methods.
- * The custom_post_type() method registers the Scrapgopost type 'scrapgo' with WordPress. It defines the labels and arguments for the Scrapgopost type 
- *      and calls register_post_type() to register it.
+* Description:
+*   The ScrapGoDealsSetup class manages the setup and configuration of the ScrapGo plugin. It handles tasks such as registering custom post types, 
+*   taxonomies, menu pages, settings, and script enqueuing.
+* Usage:
+*   To utilize the functionality provided by the ScrapGoDealsSetup class, follow these steps:
+*       Ensure the class is included in your WordPress plugin or theme.
+*       Instantiate the class using the get_instance() method.
+*
+* Methods:
+*   __construct(): Constructor method. Initializes necessary WordPress hooks for activation, deactivation, custom post type registration, custom taxonomy registration,
+*        menu creation, settings initialization, and script enqueuing.
+*   get_instance(): Static method to retrieve the singleton instance of the class.
+*   activate(): Method called during plugin activation. Performs activation tasks, if any.
+*   deactivate(): Method called during plugin deactivation. Performs deactivation tasks, if any.
+*   custom_post_type(): Method to register the custom post type 'scrapgo'.
+*   custom_taxonomy(): Method to register the custom taxonomy for the 'scrapgo' post type.
+*   create_menu(): Method to add menu pages under the 'Settings' menu.
+*   settings_page(): Method to display the settings page.
+*   run_manual_page(): Method to display the manual import page.
+*   initialize_settings(): Method to register and initialize plugin settings.
+*   settings_section_callback(): Callback function for the settings section.
+*   debug_checkbox_callback(): Callback function for the debug mode checkbox.
+*   enqueue_admin_scripts(): Method to enqueue scripts for the admin dashboard.
+*   enqueue_custom_scripts(): Method to enqueue custom scripts.
+*
+* Dependencies:
+*   The class relies on WordPress hooks and functions for plugin activation, deactivation, menu creation, settings registration, script enqueuing, and other administrative tasks.
  */
 class ScrapGoDealsSetup {
     

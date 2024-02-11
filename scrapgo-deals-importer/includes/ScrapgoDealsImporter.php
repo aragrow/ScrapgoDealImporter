@@ -1,18 +1,26 @@
 <?php
 /**
- * This PHP class, ScrapGoDealsImporter, handleS importing deals from an external API into WordPress and saving them as posts with associated metadata. 
- * Here's a breakdown of its key functionalities:
- * Constructor: Initializes the class and sets up various WordPress hooks for scheduling imports and handling manual import requests.
- * import_scheduled() Method: Sets up a scheduled event to import deals once a day if it hasn't been scheduled already.
- * import_manually() Method: Handles manual import requests initiated via AJAX. It calls the import_deals() method to perform the import.
- * import_deals() Method: Retrieves deals from an external API, iterates through them, and inserts each deal as a WordPress post. However, 
- *              there's an issue with transaction handling. The code tries to start a transaction but immediately rolls it back without any 
- *              meaningful operation. This part needs correction.
- * insert_post() Method: Inserts a single deal as a WordPress post and saves its metadata using post meta. However, it's not clear where 
- *              $wpdb is defined, which could lead to errors.
- * insert_post_meta() Method: Inserts metadata associated with a deal as post meta. It iterates through predefined meta keys and saves them 
- *              for each deal. However, it also faces issues with transaction handling and the usage of $wpdb.
- */
+* Description:
+*   The ScrapGoDealsImporter class is responsible for importing deals from an external source and saving them as WordPress posts. 
+*   It provides methods for scheduled imports, manual imports, and processing deal metadata.
+*
+* Usage:
+*   To utilize the functionality of the ScrapGoDealsImporter class, follow these steps:
+*       Ensure the class is included in your WordPress plugin or theme.
+*       Instantiate the class using the get_instance() method.
+*       The class will automatically hook into WordPress actions and trigger the necessary import processes.
+* Methods:
+*   __construct(): Constructor method. Initializes necessary WordPress action hooks for scheduled and manual imports.
+*   get_instance(): Static method to retrieve the singleton instance of the class.
+*   import_scheduled(): Method to schedule the import of deals to run once a day. Hooks into the WordPress init action.
+*   import_manually(): Method to trigger manual import of deals. Hooks into the WordPress AJAX action wp_ajax_scrapgo_run_import.
+*   import_deals(): Method to fetch deals from an external API endpoint and insert them into the WordPress database. Invoked by scheduled or manual imports.
+*   insert_post($deal): Method to insert a deal as a WordPress post. Checks for existing posts to prevent duplicates.
+*   manage_post_meta($post_id, $deal): Method to manage post metadata for each deal.
+*   process_post_meta($post_id, $meta_key, $meta_value): Method to process and save individual post metadata.
+* Dependencies:
+*   The class relies on the WordPress database and AJAX functionality to fetch and save deal data.
+*/
 class ScrapGoDealsImporter {
 
     // Static flag to track whether the class has been instantiated
