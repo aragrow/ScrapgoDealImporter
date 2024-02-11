@@ -3,7 +3,9 @@
 Plugin Name: ScrapGo Deals Importer
 Description: Imports deals from ScrapGo API and saves them into the WordPress database.
 Version: 1.0
-Author: David Arago
+ * Author:            Aragrow
+ * Author URI:        https://aragrow.me
+ * Plugin URI: 		  https://aragrow.me/plugins/scrapgo-deals-importer
 */
 
 // Exit if accessed directly.

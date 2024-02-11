@@ -85,7 +85,8 @@ class ScrapGoDealsImporter {
 
                 foreach ($deals['response']['results'] as $deal) {
                     
-                    //if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump($deal);echo '</div>';
+                    if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;"><h1>';var_dump('Source _ID: ');var_dump($deal['_id']);echo '</h1></div>';
+                    if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump($deal);echo '</div>';
                     $this->insert_post($deal);
 
                 }
@@ -109,18 +110,18 @@ class ScrapGoDealsImporter {
         
         global $wpdb;
         
-        if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Source _ID: ');var_dump($deal['_id']);echo '</div>';
+    
 
             // Construct your SQL query
         $sql = "SELECT * FROM {$wpdb->prefix}posts WHERE post_type = 'scrapgo' and post_name = %s";
 
         // Execute the query and retrieve the results
         $results = $wpdb->get_results( $wpdb->prepare( $sql, $deal['_id'] ) );
-        if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump($wpdb->last_query);;echo '</div>';
+        if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px; font-weight:bold;">';var_dump($wpdb->last_query);;echo '</div>';
         
         // Check if there are results
         if ($results) {
-            if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Already Imported.  SKIP.: ');echo '</div>';
+            if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px; color:red; ">';var_dump('Already Imported.  SKIPPED.: ');echo '</div>';
             return;
         }
 
@@ -203,9 +204,8 @@ class ScrapGoDealsImporter {
                 $main_key = $meta_key[0];
                 foreach($meta_key[1] as $key){
                     $sub_key = $main_key.'-'.$key;
-                   // if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Sub Key: ');var_dump($sub_key);echo '</div>';
+                   if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Sub Key: ');var_dump($sub_key);var_dump(' - Meta Value:');var_dump($deal[$main_key][$key]);echo '</div>';
                     $this->process_post_meta($post_id, $sub_key, $deal[$main_key][$key]);
-                   // if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Sub Key:');var_dump($sub_key);var_dump(' Processed');echo '<hr /></div>';
                 }
 
             } else {
@@ -213,9 +213,8 @@ class ScrapGoDealsImporter {
               //  if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Meta Key: ');var_dump($meta_key);echo '</div>';
                 // Process simple json item
                 if (!isset($deal[$meta_key])) continue;
-             //   if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Meta Key:');var_dump($meta_key);var_dump(' Processed');echo '<hr /></div>';
+                if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Meta Key:');var_dump($meta_key);var_dump(' - Meta Value:');var_dump($deal[$meta_key]);echo '</div>';
                 $this->process_post_meta($post_id, $meta_key, $deal[$meta_key]);
-
             }
         
         }
@@ -228,16 +227,14 @@ class ScrapGoDealsImporter {
 
         global $wpdb;
     
-        $meta_value = get_post_meta($post_id, $meta_key, true);
+        $found = get_post_meta($post_id, $meta_key, true);
 
-        if (!empty($meta_value)) {
+        if (!empty($found)) {
             $meta = update_post_meta( $post_id, $meta_key, $meta_value );
         }
         else {
             $meta = add_post_meta($post_id, $meta_key, $meta_value, true);
         }    
-    
-        if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Meta ID: ');var_dump($meta);echo '<hr /></div>';
 
         // Save deal metadata using post meta
         if (is_wp_error($meta)) {
