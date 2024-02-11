@@ -1,6 +1,7 @@
 ##################
 ##### CLASS ScrapGoDealsSetup
 ##################
+
 The ScrapGoDealsSetup class in WordPress is responsible for setting up various components of a plugin or theme related to managing deals. Let's break down the key functionalities and methods of this class:
 
 Singleton Pattern:
@@ -44,6 +45,7 @@ Overall, the ScrapGoDealsSetup class provides a structured approach to setting u
 ##################
 ##### CLASS ScrapGoDealsImporter
 ##################
+
 The ScrapGoDealsImporter class is designed to import deals from an external source into WordPress and manage their metadata. Let's break down the main components and functionalities of this class:
 
 Singleton Pattern:
@@ -81,4 +83,5 @@ This class effectively manages the import of deals into WordPress and ensures th
 ##################
 ##### JS admin.js
 ##################
+
 This code snippet sets up a click event listener on a button. When the button is clicked, it triggers an AJAX request to a WordPress endpoint. Upon success, it opens a new window and displays the response from the server. If there's an error, it logs an error message. This code is commonly used in WordPress plugins and themes to perform asynchronous tasks without reloading the entire page.
