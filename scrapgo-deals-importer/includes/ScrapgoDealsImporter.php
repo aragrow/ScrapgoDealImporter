@@ -28,7 +28,7 @@ class ScrapGoDealsImporter {
 
     private function __construct() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsImporter->_construct()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         // Other constructor code...
 
         add_action('init', [$this, 'import_scheduled']);
@@ -45,6 +45,9 @@ class ScrapGoDealsImporter {
 
     // Method to get the instance of the class
     public static function get_instance() {
+
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+
         if ( ! isset( self::$instance ) ) {
             self::$instance = new self();
         }
@@ -54,7 +57,7 @@ class ScrapGoDealsImporter {
 
     public function import_scheduled() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsImporter->import_scheduled()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         // Schedule import to run once a day
         if (!wp_next_scheduled('scrapgo_event')) {
             // Get the current time
@@ -70,14 +73,14 @@ class ScrapGoDealsImporter {
     
     function import_manually() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsImporter->import_manually()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         $this->import_deals();
         wp_die(); // Terminate script execution
     }
 
     public function import_deals() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsImporter->import_deals()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         
         global $wpdb;
 
@@ -114,13 +117,11 @@ class ScrapGoDealsImporter {
 
     public function insert_post($deal) {
 
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsImporter->insert_post()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         
         global $wpdb;
-        
-    
 
-            // Construct your SQL query
+        // Construct your SQL query
         $sql = "SELECT * FROM {$wpdb->prefix}posts WHERE post_type = 'scrapgo' and post_name = %s";
 
         // Execute the query and retrieve the results
@@ -164,16 +165,93 @@ class ScrapGoDealsImporter {
             die('Error inserting post: ' . $post->get_error_message());
 
         } else {
-
+            
+            if (isset($deal['images']) ) $this->manage_post_media($post, $deal['images'], $deal['Description']);
             $this->manage_post_meta($post, $deal);
 
         }
         
     }
 
+    public function manage_post_media($post_id, $images, $descr) {
+
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+
+        global $wpdb;
+
+        foreach($images as $image) {
+            // Include necessary WordPress core files
+            require_once(ABSPATH . 'wp-admin/includes/file.php');
+            require_once(ABSPATH . 'wp-admin/includes/media.php');
+            require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+            // Check if "https" is not found in the string
+            if (strpos($image, "https:") === false) {
+                // Append "https" to the string
+                $image = "https:" . $image;
+            }
+            if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Media: ');var_dump($image);echo '<hr /></div>';
+
+            // Check if the URL is valid
+            if ( ! filter_var($image, FILTER_VALIDATE_URL) ) {
+
+            // Rollback the transaction if an error occurred
+            $wpdb->query('ROLLBACK');
+            // Optionally, you can log the error or handle it in another way
+                return new WP_Error('invalid_image_url', 'Invalid image URL');
+            }
+
+            // Download the image to the server
+            $media_id = media_sideload_image($image, $post_id, $desc, 'id');
+
+            if (!has_post_thumbnail($post_id)) set_post_thumbnail($post_id, $media_id);
+            if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Media Id: ');var_dump($media_id);echo '<hr /></div>';
+            if (!is_wp_error($media_id)) {
+                // The image was successfully sideloaded and attached to the post
+                if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump("Media sideloaded successfully ");echo '<hr /></div>';
+            } else {
+                // An error occurred during sideloading
+                $wpdb->query('ROLLBACK');
+                if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump($media_id->get_error_message());echo '<hr /></div>';
+                die();
+            }
+
+            /*
+            if (!is_wp_error($media_id)) {
+                // Get the attachment ID of the uploaded image
+                $attachment = get_posts(array(
+                    'post_type' => 'attachment',
+                    'post_id' => $media_id
+                ));
+
+                if ($attachments) {
+                    foreach ($attachments as $attachment) {
+                        if (strpos($attachment->guid, $file) !== false) {
+                            $attachment_id = $attachment->ID;
+                            break;
+                        }
+                    }
+                }
+
+                // Use the attachment ID to do further processing if needed
+                if (isset($attachment_id)) {
+                    // Do something with the attachment ID (e.g., attach it to a post)
+                    // $attachment_id can be used to attach the image to a post or custom post type
+                    // Example: set_post_thumbnail($post_id, $attachment_id);
+                } else {
+                    error_log('Unable to find the attachment ID.');
+                }
+            } else {
+                echo error_log($media->get_error_message());
+            } 
+*/
+        }
+
+    }
+
     public function manage_post_meta($post_id, $deal) {
 
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsImporter->insert_post_meta()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         
         $post_metas = [
             'Modified Date',
@@ -231,7 +309,7 @@ class ScrapGoDealsImporter {
 
     public function process_post_meta($post_id, $meta_key, $meta_value) {
 
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsImporter->process_post_meta()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
         global $wpdb;
     
