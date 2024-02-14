@@ -21,7 +21,7 @@
 * Dependencies:
 *   The class relies on the WordPress database and AJAX functionality to fetch and save deal data.
 */
-class ScrapGoDealsImporter {
+class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
 
     // Static flag to track whether the class has been instantiated
     private static $instance;
@@ -83,9 +83,18 @@ class ScrapGoDealsImporter {
         if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         
         global $wpdb;
+        $args = ['Header'=>[]];
+        $url = sanitize_url(get_option('scrapgo_api_url'));
 
-        $url = 'https://scrapgoapp.com/api/1.1/obj/Deal';
-        $response = wp_remote_get($url);
+        $content_type = sanitize_string(get_option('scrapgo_content_type'));
+        if (isset($content_type) && empty($content_type)) $args['Header'][] = ['Content-Type' => $content_type];
+
+        $token = sanitize_string(get_option('scrapgo_authorization_token'));
+        if (isset($token) && empty($token)) $args['Header'][] = ['Bearer' => $token];
+
+
+        //$url = 'https://scrapgoapp.com/api/1.1/obj/Deal';
+        $response = wp_remote_get($url, $args);
 
         if (!is_wp_error($response)) {
             $body = wp_remote_retrieve_body($response);
@@ -98,7 +107,18 @@ class ScrapGoDealsImporter {
                     
                     if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;"><h1>';var_dump('Source _ID: ');var_dump($deal['_id']);echo '</h1></div>';
                     if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump($deal);echo '</div>';
-                    $this->insert_post($deal);
+                    
+                    // Get the post object by post_name
+                    $post = get_page_by_path($post_name, OBJECT, 'post');
+                    // Check if the post object exists
+                    if ($post instanceof WP_Post) {
+                        $post_id = $post->ID;
+                        if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;"><h1>';var_dump('Post Exists, Post_id: ');var_dump($post_id);echo '</h1></div>';
+                        $this->update_post($post_id, $deal);
+                    } else {
+                        if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;"><h1>';var_dump('Post Does not Exists');echo '</h1></div>';
+                        $this->insert_post($deal);
+                    }
 
                 }
                 
@@ -115,24 +135,19 @@ class ScrapGoDealsImporter {
         }
     }
 
+    public function update_post($deal) {
+
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+
+        // IF UPDATE POST IS NEEDED, ADD CODE HERE.
+
+    }
+
     public function insert_post($deal) {
 
         if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         
         global $wpdb;
-
-        // Construct your SQL query
-        $sql = "SELECT * FROM {$wpdb->prefix}posts WHERE post_type = 'scrapgo' and post_name = %s";
-
-        // Execute the query and retrieve the results
-        $results = $wpdb->get_results( $wpdb->prepare( $sql, $deal['_id'] ) );
-        if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px; font-weight:bold;">';var_dump($wpdb->last_query);;echo '</div>';
-        
-        // Check if there are results
-        if ($results) {
-            if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px; color:red; ">';var_dump('Already Imported.  SKIPPED.: ');echo '</div>';
-            return;
-        }
 
         // Array to sanitize values
         $format = [
@@ -195,10 +210,10 @@ class ScrapGoDealsImporter {
             // Check if the URL is valid
             if ( ! filter_var($image, FILTER_VALIDATE_URL) ) {
 
-            // Rollback the transaction if an error occurred
-            $wpdb->query('ROLLBACK');
-            // Optionally, you can log the error or handle it in another way
-                return new WP_Error('invalid_image_url', 'Invalid image URL');
+                // Optionally, you can log the error or handle it in another way
+                if(SCRAPGO_DEBUG) echo '<div style="margin-left: 200px;">';var_dump('Invalid image URL');echo '<hr /></div>';
+                continue;
+                
             }
 
             // Download the image to the server
@@ -216,35 +231,6 @@ class ScrapGoDealsImporter {
                 die();
             }
 
-            /*
-            if (!is_wp_error($media_id)) {
-                // Get the attachment ID of the uploaded image
-                $attachment = get_posts(array(
-                    'post_type' => 'attachment',
-                    'post_id' => $media_id
-                ));
-
-                if ($attachments) {
-                    foreach ($attachments as $attachment) {
-                        if (strpos($attachment->guid, $file) !== false) {
-                            $attachment_id = $attachment->ID;
-                            break;
-                        }
-                    }
-                }
-
-                // Use the attachment ID to do further processing if needed
-                if (isset($attachment_id)) {
-                    // Do something with the attachment ID (e.g., attach it to a post)
-                    // $attachment_id can be used to attach the image to a post or custom post type
-                    // Example: set_post_thumbnail($post_id, $attachment_id);
-                } else {
-                    error_log('Unable to find the attachment ID.');
-                }
-            } else {
-                echo error_log($media->get_error_message());
-            } 
-*/
         }
 
     }

@@ -6,7 +6,17 @@ Version: 1.0
  * Author:            Aragrow
  * Author URI:        https://aragrow.me
  * Plugin URI: 		  https://aragrow.me/plugins/scrapgo-deals-importer
-*/
+ *
+ * Here's a brief overview of the files and their purposes:
+
+ *	scrapgo-deals-importer.php: The main plugin file where you define plugin metadata and include necessary files.
+ *	includes/ScrapgoDealsSetup.php: 
+ *		- Code to add custom post type and taxonomy
+ *		- Code to add menu items and submenus.
+ *		- Code to create cron job.
+ *	includes/ScrapgoDealsImporter.php: Logic for interacting with the Scrapgo API, fetching data, and importing it into WordPress.
+ *	dist: Directory for CSS and JavaScript files used in the plugin.
+ */
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -73,3 +83,8 @@ if (!class_exists('ScrapgoDealsImporter')) {
    //  new ScrapgoDealsImporter(__FILE__);
 }
 
+// Define the class and the function.
+if (!class_exists('ScrapgoDealUtilities')) {
+    require_once dirname( __FILE__ ) . '/includes/ScrapgoDealsUtilities.php';
+   //  new ScrapgoDealsImporter(__FILE__);
+}

@@ -28,7 +28,7 @@
 * Dependencies:
 *   The class relies on WordPress hooks and functions for plugin activation, deactivation, menu creation, settings registration, script enqueuing, and other administrative tasks.
  */
-class ScrapGoDealsSetup {
+class ScrapGoDealsSetup Extends ScrapGoDealsUtilities {
     
     // Static flag to track whether the class has been instantiated
     private static $instance;
@@ -36,7 +36,7 @@ class ScrapGoDealsSetup {
     // Private constructor to prevent direct instantiation
     private function __construct() {
 
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->_construct()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         // Other constructor code...
 
         // Register activation hook within the class constructor.
@@ -65,6 +65,9 @@ class ScrapGoDealsSetup {
 
     // Method to get the instance of the class
     public static function get_instance() {
+        
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+
         if ( ! isset( self::$instance ) ) {
             self::$instance = new self();
         }
@@ -73,13 +76,13 @@ class ScrapGoDealsSetup {
     }
 
     public function activate() {
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->activate()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         // Activation tasks, if any
 
     }
 
     public function deactivate() {
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->deactivate()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
         // Activation tasks, if any
 
     }
@@ -89,7 +92,7 @@ class ScrapGoDealsSetup {
      */
     public function custom_post_type() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->custom_post_type()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
         $labels = array(
             'name'                  => _x( 'Scrapgo', 'Post Type General Name', 'scrapgo' ),
@@ -148,7 +151,7 @@ class ScrapGoDealsSetup {
      */
     public function custom_taxonomy() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->custom_taxonomy()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
         $labels = array(
             'name' => _x( 'Scrapgo Taxonomy', 'taxonomy general name' ),
@@ -180,7 +183,7 @@ class ScrapGoDealsSetup {
 
     public function create_menu() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->create_menu()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
         // Add main menu page.
         add_menu_page(
@@ -208,7 +211,7 @@ class ScrapGoDealsSetup {
     // Function to display the settings page
     public function settings_page() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->settings_page()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
         ?>
         <div class="wrap">
@@ -226,7 +229,7 @@ class ScrapGoDealsSetup {
 
     public function run_manual_page() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->run_manual_page()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
         ?>
         <div class="wrap">
@@ -238,18 +241,37 @@ class ScrapGoDealsSetup {
    
     public function initialize_settings() {
 
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->initialize_settings()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
         // Register settings group
         register_setting(
-            'scrapgo_settings_group',   // Option group
-            'scrapgo_debug'             // Option name
+            'scrapgo_settings_group',       // Option group
+            'scrapgo_debug',                // Option name
+            [$this, 'sanitize_checkbox']    // Option sanitize
         );
-    
+        
+        register_setting(
+            'scrapgo_settings_group',   // Option group
+            'scrapgo_api_url',          // Option name
+            [$this, 'sanitize_url']     // Option sanitize
+        );
+        
+        register_setting(
+            'scrapgo_settings_group',  // Option group
+            'scrapgo_authorization_token',              // Option name
+            [$this, 'sanitize_string']         // Option sanitize
+        );
+
+        register_setting(
+            'scrapgo_settings_group',  // Option group
+            'scrapgo_content_type',              // Option name
+            [$this, 'sanitize_string']         // Option sanitize
+        );
+
         // Add settings section
         add_settings_section(
             'scrapgo_settings_section',             // ID
-            'Settings',                       // Title
+            'Settings',                             // Title
             [$this,'settings_section_callback'],    // Callback
             'scrapgo-settings'                      // Page
         );
@@ -262,12 +284,39 @@ class ScrapGoDealsSetup {
             'scrapgo-settings',                 // Page
             'scrapgo_settings_section'          // Section
         );
+
+        // Add settings field
+        add_settings_field(
+            'scrapgo_api_url',                    // ID
+            'API URL',                          // Title
+            [$this,'api_url_callback'],         // Callback
+            'scrapgo-settings',                 // Page
+            'scrapgo_settings_section'          // Section
+        );
+
+        // Add settings field
+        add_settings_field(
+            'scrapgo_content_type',             // ID
+            'API Content Type',                        // Title
+            [$this,'content_type_callback'],    // Callback
+            'scrapgo-settings',                 // Page
+            'scrapgo_settings_section'          // Section
+        );
+
+        // Add settings field
+        add_settings_field(
+            'scrapgo_authorization_token',          // ID
+            'API Token',                            // Title
+            [$this,'authorization_token_callback'], // Callback
+            'scrapgo-settings',                     // Page
+            'scrapgo_settings_section'              // Section
+        );
     }
     
     // Section callback function
     public function settings_section_callback() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->settings_section_callback()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
         echo '<p>Enable or disable debug mode for Scrapgo.</p>';
     }
@@ -275,14 +324,45 @@ class ScrapGoDealsSetup {
     // Field callback function
     public function debug_checkbox_callback() {
 
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->debug_checkbox_callback()');
-        $debug_option = get_option('scrapgo_debug');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+
+        $debug_option = sanitize_checkbox(get_option('scrapgo_debug'));
         echo '<input type="checkbox" id="scrapgo_debug" name="scrapgo_debug" ' . checked(1, 1, false) . 'value="1">';
     }
 
+    // Field callback function
+    public function api_url_callback() {
+
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+
+        $debug_option = sanitize_url(get_option('scrapgo_api_url'));
+        $placeholder = __('Enter Authorization Token', 'scrapgo');
+        echo "<input type='text' id='scrapgo_api_url' name='scrapgo_api_url' value='$debug_option' placeholer='$placeholder' required>";
+    }
+    
+    // Field callback function
+    public function authorization_token_callback() {
+
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+
+        $debug_option = sanitize_string(get_option('scrapgo_authorization_token'));
+        $placeholder = __('Enter Authorization Token', 'scrapgo');
+        echo "<input type='text' id='scrapgo_authorization_token' name='scrapgo_authorization_token' value='$debug_option' placeholer='$placeholder'>";
+    }
+
+    // Field callback function
+    public function content_type_callback() {
+
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+
+        $debug_option = sanitize_string(get_option('scrapgo_content_type'));
+        $placeholder = __('Content Type', 'scrapgo');
+        echo "<input type='text' id='scrapgo_content_type' name='scrapgo_content_type' value='$debug_option' placeholer='$placeholder'>";
+        }
+
     public function enqueue_admin_scripts() {
         
-        if(SCRAPGO_DEBUG) error_log('ScrapGoDealsSetup->enqueue_admin_scripts()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
         wp_enqueue_script('scrapgo-admin-script', SCRAPGO_PLUGIN_URL . 'dist/js/admin.js', array('jquery'), null, true);
         //wp_localize_script('scrapgo-admin-script', 'ajaxurl', admin_url('admin-ajax.php'));
@@ -290,6 +370,7 @@ class ScrapGoDealsSetup {
 
     function enqueue_custom_scripts() {
 
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
     }
 
 }
