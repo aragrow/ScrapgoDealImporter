@@ -65,11 +65,15 @@ if ( ! defined( 'SCRAPGO_ITEMS_PER_PAGE' ) ) {
 if (get_option('scrapgo_debug')) define( 'SCRAPGO_DEBUG', 1 );
 else define( 'SCRAPGO_DEBUG', 0 );
 
-
 // Get the current date and time in a specific format
 $current_date_time = date('Y-m-d H:i:s');
 if(SCRAPGO_DEBUG) error_log(' ######################## PLUGIN LOADS at: '.$current_date_time);
 
+// Define the class and the function.
+if (!class_exists('ScrapgoDealUtilities')) {
+    require_once dirname( __FILE__ ) . '/includes/ScrapgoDealsUtilities.php';
+   //  new ScrapgoDealsImporter(__FILE__);
+}
 
 // Define the class and the function.
 if (!class_exists('ScrapgoDealsSetup')) {
@@ -83,8 +87,4 @@ if (!class_exists('ScrapgoDealsImporter')) {
    //  new ScrapgoDealsImporter(__FILE__);
 }
 
-// Define the class and the function.
-if (!class_exists('ScrapgoDealUtilities')) {
-    require_once dirname( __FILE__ ) . '/includes/ScrapgoDealsUtilities.php';
-   //  new ScrapgoDealsImporter(__FILE__);
-}
+

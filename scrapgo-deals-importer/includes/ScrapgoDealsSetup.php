@@ -61,6 +61,8 @@ class ScrapGoDealsSetup Extends ScrapGoDealsUtilities {
 
         add_action('wp_enqueue_scripts', [$this, 'enqueue_custom_scripts']);
 
+        add_action('add_meta_boxes', [$this, 'custom_meta_box']);
+
     }
 
     // Method to get the instance of the class
@@ -325,9 +327,8 @@ class ScrapGoDealsSetup Extends ScrapGoDealsUtilities {
     public function debug_checkbox_callback() {
 
         if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
-
-        $debug_option = sanitize_checkbox(get_option('scrapgo_debug'));
-        echo '<input type="checkbox" id="scrapgo_debug" name="scrapgo_debug" ' . checked(1, 1, false) . 'value="1">';
+        $debug_option = $this->sanitize_checkbox(get_option('scrapgo_debug'));
+        echo '<input type="checkbox" id="scrapgo_debug" name="scrapgo_debug" ' . checked(1, $debug_option, false) . 'value="1">';
     }
 
     // Field callback function
@@ -335,9 +336,9 @@ class ScrapGoDealsSetup Extends ScrapGoDealsUtilities {
 
         if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
-        $debug_option = sanitize_url(get_option('scrapgo_api_url'));
+        $debug_option = $this->sanitize_url(get_option('scrapgo_api_url'));
         $placeholder = __('Enter Authorization Token', 'scrapgo');
-        echo "<input type='text' id='scrapgo_api_url' name='scrapgo_api_url' value='$debug_option' placeholer='$placeholder' required>";
+        echo "<input type='text' class='regular-text' id='scrapgo_api_url' name='scrapgo_api_url' value='$debug_option' placeholer='$placeholder' required>";
     }
     
     // Field callback function
@@ -345,9 +346,9 @@ class ScrapGoDealsSetup Extends ScrapGoDealsUtilities {
 
         if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
-        $debug_option = sanitize_string(get_option('scrapgo_authorization_token'));
+        $debug_option = $this->sanitize_string(get_option('scrapgo_authorization_token'));
         $placeholder = __('Enter Authorization Token', 'scrapgo');
-        echo "<input type='text' id='scrapgo_authorization_token' name='scrapgo_authorization_token' value='$debug_option' placeholer='$placeholder'>";
+        echo "<input type='text' class='regular-text' id='scrapgo_authorization_token' name='scrapgo_authorization_token' value='$debug_option' placeholer='$placeholder'>";
     }
 
     // Field callback function
@@ -355,9 +356,9 @@ class ScrapGoDealsSetup Extends ScrapGoDealsUtilities {
 
         if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
 
-        $debug_option = sanitize_string(get_option('scrapgo_content_type'));
+        $debug_option = $this->sanitize_string(get_option('scrapgo_content_type'));
         $placeholder = __('Content Type', 'scrapgo');
-        echo "<input type='text' id='scrapgo_content_type' name='scrapgo_content_type' value='$debug_option' placeholer='$placeholder'>";
+        echo "<input type='text' class='regular-text' id='scrapgo_content_type' name='scrapgo_content_type' value='$debug_option' placeholer='$placeholder'>";
         }
 
     public function enqueue_admin_scripts() {
@@ -372,6 +373,48 @@ class ScrapGoDealsSetup Extends ScrapGoDealsUtilities {
 
         if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
     }
+
+    // Add meta box to post editor
+    public function custom_meta_box() {
+        add_meta_box(
+            'custom-meta-box', // ID of the meta box
+            'Attributes', // Title of the meta box
+            [$this, 'display_custom_meta_box'], // Callback function to display the meta box content
+            'scrapgo', // Post type to which the meta box should be added
+            'normal', // Context where the meta box should be displayed
+            'default' // Priority of the meta box
+        );
+    }
+    // Callback function to display the content of the meta box
+
+    public function display_custom_meta_box($post) {
+
+
+        $custom_fields = get_post_custom($post->ID);
+
+        echo '<table colspan="2">
+            <tbody>';
+      
+        if (!empty($custom_fields)) {
+            foreach ($custom_fields as $key => $values) {
+                echo '<tr>';
+                echo "<td><label for='$key'>$key </label><td>";
+                foreach ($values as $value) {
+                    $value = esc_attr($value);
+                    echo "<td><input class='regular-text' type='text' id='$key' name='$key' value='{$value}' readonly></td>";
+                }
+                echo '</tr>';
+            }
+        } else {
+            echo '<tr><td colspan="2">No custom fields found for this post.</td></tr>';
+        }
+      
+        echo '</tbody>
+                </table>';
+       
+
+    }
+
 
 }
 

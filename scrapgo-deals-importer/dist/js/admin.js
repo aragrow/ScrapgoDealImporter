@@ -1,9 +1,13 @@
 jQuery(document).ready(function($) {
     // Add click event listener to the button
     $('#triggerImportManually').on('click', function() {
-
+        
+        $('#triggerImportManually').prop('disabled', true);
+        $('#triggerImportManually').css('opacity', '0.5');
+        var newWindow = window.open('', 'scrapgorun');
+        newWindow.document.write('<div style="margin-left: 200px;"><h2>Executing ScarGo Import</h2></div>');
         // Perform AJAX request
-        jQuery.ajax({
+        $.ajax({
             type: 'POST', // or 'GET' depending on your needs
             url: ajaxurl, // WordPress AJAX URL
             data: {
@@ -13,7 +17,6 @@ jQuery(document).ready(function($) {
                 console.log('Import triggered successfully.');
                 console.log(response); // Response from the server
                 // Open response in a new window
-                var newWindow = window.open('Scrapgo Run Manual Import - Response', 'scrapgorunimportresponse');
                 newWindow.document.write(response);
                 newWindow.document.close();
             },
@@ -24,5 +27,6 @@ jQuery(document).ready(function($) {
         });
 
     });
+    return false;
 
 });
