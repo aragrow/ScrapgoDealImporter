@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
         $('#triggerImportManually').prop('disabled', true);
         $('#triggerImportManually').css('opacity', '0.5');
         var newWindow = window.open('', 'scrapgorun');
-        newWindow.document.write('<div style="margin-left: 200px;"><h2>Executing ScarGo Import</h2></div>');
+        newWindow.document.write('<div style="margin-left: 200px;"><h2>Executing ScrapGo Import</h2></div>');
         // Perform AJAX request
         $.ajax({
             type: 'POST', // or 'GET' depending on your needs
@@ -19,6 +19,8 @@ jQuery(document).ready(function($) {
                 // Open response in a new window
                 newWindow.document.write(response);
                 newWindow.document.close();
+                $('#triggerImportManually').prop('disabled', false);
+                $('#triggerImportManually').css('opacity', '1');
             },
             error: function(xhr, status, error) {
                 console.error('Error occurred while triggering import.');

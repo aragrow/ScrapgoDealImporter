@@ -26,9 +26,12 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
     // Static flag to track whether the class has been instantiated
     private static $instance;
 
+    private $keys = [];
+    private $uniqueKeys = [];
+
     private function __construct() {
         
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
         // Other constructor code...
 
         add_action('init', [$this, 'import_scheduled']);
@@ -46,7 +49,7 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
     // Method to get the instance of the class
     public static function get_instance() {
 
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
 
         if ( ! isset( self::$instance ) ) {
             self::$instance = new self();
@@ -57,7 +60,7 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
 
     public function import_scheduled() {
         
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
         // Schedule import to run once a day
         if (!wp_next_scheduled('scrapgo_event')) {
             // Get the current time
@@ -73,18 +76,17 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
     
     function import_manually() {
         
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
         $this->import_deals();
         wp_die(); // Terminate script execution
     }
 
     public function import_deals() {
         
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
         
         // Start time
         $start_time = microtime(true);
-        echo('<div style="margin-left: 200px;"><h2>Executing ScarGo Import</h2></div>');
 
         global $wpdb;
         $args = ['Header'=>[]];
@@ -103,6 +105,8 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
         if (!is_wp_error($response)) {
             $body = wp_remote_retrieve_body($response);
             $deals = json_decode($body, true);
+
+            $this->findJsonKeys($deals['response']['results']);
    
             $wpdb->query('START TRANSACTION');
             try {
@@ -134,7 +138,7 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
                 // Rollback the transaction if an error occurred
                 $wpdb->query('ROLLBACK');
                 // Optionally, you can log the error or handle it in another way
-                error_log('Error: ' . $e->getMessage());
+                var_dump('Error: ' . $e->getMessage());
 
             }   
         }
@@ -145,12 +149,34 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
         $execution_time = number_format($end_time - $start_time,2);
 
         // Display execution time
-        echo "<div style='margin-left: 200px;'><h2>ScrapGo Import Completed. Import executed in $execution_time seconds</h2>";
+        echo "<div style='margin-left: 200px;'><h2>ScrapGo Import Completed. Import executed in $execution_time seconds</h2></div>";
+    }
+
+    public function findJsonKeys($input) {
+        
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
+
+        // Loop throught the input and extract keys.
+        foreach($input as $item) {
+            
+               //Extract Keys
+            $keys = array_keys($item);
+
+            // Merge keys into the uniqueKeys array
+            $this->keys = array_merge($this->keys, $keys);
+
+        }
+
+        // Remove duplicate keys and reindex the array
+        $this->uniqueKeys = array_values(array_unique($this->keys));
+
+        if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Unique Keys: ');var_dump($this->uniqueKeys);echo '</div>';}
+
     }
 
     public function update_post($deal) {
 
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
 
         // IF UPDATE POST IS NEEDED, ADD CODE HERE.
 
@@ -158,7 +184,7 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
 
     public function insert_post($deal) {
 
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
         
         global $wpdb;
 
@@ -174,7 +200,7 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
 
         // Insert each deal into the post table
         $post_data = array(
-            'post_title' => $deal['d_material_type_label'],
+            'post_title' => isset($deal['d_material_type_label'])?$deal['d_material_type_label']:$deal['Description'],
             'post_name' => $deal['_id'],
             'post_content' => $deal['Description'],
             'post_status' => 'publish',
@@ -183,7 +209,7 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
         );
 
         $post = wp_insert_post($post_data, $format);
-        if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Post ID after Insert: ');var_dump($post);echo '<hr /></div>';}
+        if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Post ID after Insert: ');var_dump($post);echo '</div>';}
 
          // Save deal metadata using post meta
          if (is_wp_error($post)) {
@@ -203,7 +229,7 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
 
     public function manage_post_media($post_id, $images, $descr) {
 
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
 
         global $wpdb;
 
@@ -218,29 +244,30 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
                 // Append "https" to the string
                 $image = "https:" . $image;
             }
-            if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Media: ');var_dump($image);echo '<hr /></div>';}
+            if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Media: ');var_dump($image);echo '</div>';}
 
             // Check if the URL is valid
             if ( ! filter_var($image, FILTER_VALIDATE_URL) ) {
 
                 // Optionally, you can log the error or handle it in another way
-                if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Invalid image URL');echo '<hr /></div>';}
+                if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Invalid image URL');echo '</div>';}
                 continue;
                 
             }
 
             // Download the image to the server
             $media_id = media_sideload_image($image, $post_id, $descr, 'id');
-
+            if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Media Id: ');var_dump($media_id);echo '</div>';}
             if (!has_post_thumbnail($post_id)) set_post_thumbnail($post_id, $media_id);
-            if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Media Id: ');var_dump($media_id);echo '<hr /></div>';}
+            
+            
             if (!is_wp_error($media_id)) {
                 // The image was successfully sideloaded and attached to the post
-                if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump("Media sideloaded successfully ");echo '<hr /></div>';}
+                if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump("Media sideloaded successfully ");echo '</div>';}
             } else {
                 // An error occurred during sideloading
                 $wpdb->query('ROLLBACK');
-                if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump($media_id->get_error_message());echo '<hr /></div>';}
+                if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump($media_id->get_error_message());echo '</div>';}
                 die();
             }
 
@@ -250,8 +277,8 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
 
     public function manage_post_meta($post_id, $deal) {
 
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
-        
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
+        /*
         $post_metas = [
             'Modified Date',
             'Created By',
@@ -278,19 +305,23 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
             'Target_Value',
             '_id'
         ];
+        */
         // Insert each deal into the post table
         
-        foreach ($post_metas as $meta_key) {
-            
-            if (is_array($meta_key)) {
-                
-                // Process complex json item
-                if (!isset($deal[$meta_key[0]])) continue;
-                $main_key = $meta_key[0];
-                foreach($meta_key[1] as $key){
-                    $sub_key = $main_key.'-'.$key;
-                   if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Sub Key: ');var_dump($sub_key);var_dump(' - Meta Value:');var_dump($deal[$main_key][$key]);echo '</div>';}
-                    $this->process_post_meta($post_id, $sub_key, $deal[$main_key][$key]);
+        foreach ($this->uniqueKeys as $meta_key) {
+
+            if ($meta_key == 'images') continue;                //If images skip
+            if (!array_key_exists($meta_key, $deal)) continue;  //If key does not exist skip
+
+            if (is_array($deal[$meta_key])) {       // If the value is an array, then look thru array.
+
+                // extract the keys.
+                $subkeys = array_keys($deal[$meta_key]);
+
+                foreach($subkeys as $key){
+                  $sub_key = $meta_key.' - '.$key;
+                  if(SCRAPGO_DEBUG) {echo '<div style="margin-left: 200px;">';var_dump('Sub Key: ');var_dump($sub_key);var_dump(' - Meta Value:');var_dump($deal[$meta_key][$key]);echo '</div>';}
+                  $this->process_post_meta($post_id, $sub_key, $deal[$meta_key][$key]);
                 }
 
             } else {
@@ -308,7 +339,7 @@ class ScrapGoDealsImporter Extends ScrapGoDealsUtilities{
 
     public function process_post_meta($post_id, $meta_key, $meta_value) {
 
-        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'()');
+        if(SCRAPGO_DEBUG) error_log(__CLASS__.'::'.__FUNCTION__.'() - '.date('H:i:s'));
 
         global $wpdb;
     
