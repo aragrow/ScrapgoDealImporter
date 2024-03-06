@@ -53,11 +53,6 @@ if ( ! defined( 'SCRAPGO_WITH_CLASSES_FILE' ) ) {
 }
 
 // Plugin Root File.
-if ( ! defined( 'SCRAPGO_PREFIX' ) ) {
-	define( 'SCRAPGO_PREFIX', 'ac_' );
-}
-
-// Plugin Root File.
 if ( ! defined( 'SCRAPGO_ITEMS_PER_PAGE' ) ) {
 	define( 'SCRAPGO_ITEMS_PER_PAGE', 50 );
 }
@@ -71,20 +66,18 @@ if(SCRAPGO_DEBUG) error_log(' ######################## PLUGIN LOADS at: '.$curre
 
 // Define the class and the function.
 if (!class_exists('ScrapgoDealUtilities')) {
-    require_once dirname( __FILE__ ) . '/includes/ScrapgoDealsUtilities.php';
-   //  new ScrapgoDealsImporter(__FILE__);
+    require_once SCRAPGO_PLUGIN_DIR . 'includes/Utilities.php';
 }
 
 // Define the class and the function.
 if (!class_exists('ScrapgoDealsSetup')) {
-    require_once dirname( __FILE__ ) . '/includes/ScrapGoDealsSetup.php';
-    //new ScrapgoDealsSetup(__FILE__);
+    require_once SCRAPGO_PLUGIN_DIR . 'includes/Setup.php';
 }
 
 // Define the class and the function.
 if (!class_exists('ScrapgoDealsImporter')) {
-    require_once dirname( __FILE__ ) . '/includes/ScrapgoDealsImporter.php';
-   //  new ScrapgoDealsImporter(__FILE__);
+    require_once SCRAPGO_PLUGIN_DIR . 'includes/Importer.php';
 }
+
 
 
